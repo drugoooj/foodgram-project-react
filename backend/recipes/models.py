@@ -165,7 +165,7 @@ class FavoriteRecipe(models.Model):
 
     @receiver(post_save, sender=User)
     def create_favorite_recipe(
-            sender, instance, created, **kwargs):
+            sender, instance, created):
         if created:
             return FavoriteRecipe.objects.create(user=instance)
 
