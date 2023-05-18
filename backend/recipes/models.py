@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 from django.core import validators
 from django.db import models
 
@@ -28,9 +29,16 @@ class Tag(models.Model):
         max_length=60,
         unique=True)
     color = models.CharField(
-        'Цвет',
+        'Цветовой HEX-код',
         max_length=7,
-        unique=True)
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+                message='Введенное значение не является цветом в формате HEX!'
+            )
+        ]
+    )
     slug = models.SlugField(
         'Ссылка',
         max_length=100,
@@ -61,11 +69,14 @@ class Recipe(models.Model):
         null=True)
     text = models.TextField(
         'Описание рецепта')
-    cooking_time = models.BigIntegerField(
+    cooking_time = models.IntegerField(
         'Время приготовления рецепта')
     ingredients = models.ManyToManyField(
         Ingredient,
-        through='RecipeIngredient')
+        through='RecipeIngredient',
+        verbose_name='Ингридиенты',
+        related_name='recipes',
+    )
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Тэги',
@@ -95,7 +106,7 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(
         'Ingredient',
         on_delete=models.CASCADE,
-        related_name='ingredient')
+        related_name='recipe')
     amount = models.PositiveSmallIntegerField(
         default=1,
         validators=(
@@ -148,8 +159,9 @@ class FavoriteRecipe(models.Model):
         null=True,
         related_name='favorite_recipe',
         verbose_name='Пользователь')
-    recipe = models.ManyToManyField(
+    recipe = models.ForeignKey(
         Recipe,
+        on_delete=models.CASCADE,
         related_name='favorite_recipe',
         verbose_name='Избранный рецепт')
 
@@ -163,7 +175,7 @@ class FavoriteRecipe(models.Model):
 
 
 class ShoppingCart(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='shopping_cart',
