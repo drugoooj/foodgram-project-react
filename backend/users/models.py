@@ -1,7 +1,8 @@
-from core.enums import Limits
-from core.validators import OneOfTwoValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from core.enums import Limits
+from core.validators import OneOfTwoValidator
 
 
 class User(AbstractUser):
@@ -13,8 +14,8 @@ class User(AbstractUser):
         verbose_name='Имя',
         max_length=Limits.MAX_LEN_NAME.value,
         validators=(OneOfTwoValidator(
-            first_regex='[^а-яёА-ЯЁ -]+',
-            second_regex='[^a-zA-Z -]+',
+            first_regex=Limits.EXCEPTION_RU.value,
+            second_regex=Limits.EXCEPTION_EN.value,
             field='Имя'),
         ),
     )
@@ -22,8 +23,8 @@ class User(AbstractUser):
         verbose_name='Фамилия',
         max_length=Limits.MAX_LAST_NAME.value,
         validators=(OneOfTwoValidator(
-            first_regex='[^а-яёА-ЯЁ -]+',
-            second_regex='[^a-zA-Z -]+',
+            first_regex=Limits.EXCEPTION_RU.value,
+            second_regex=Limits.EXCEPTION_EN.value,
             field='Фамилия'),
         ),
     )

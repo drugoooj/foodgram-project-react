@@ -2,17 +2,24 @@ from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from django.core import validators
 from django.db import models
+from django.db.models import F, Q
+
+from core.enums import Limits
 
 User = get_user_model()
 
 
 class Ingredient(models.Model):
+    name_validator = RegexValidator(
+        r'^[a-zA-Z0-9\s]*$',
+        'Название ингредиента может содержать только буквы, цифры и пробелы.'
+    )
     name = models.CharField(
         'Название ингредиента',
-        max_length=200)
+        max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value)
     measurement_unit = models.CharField(
         'Единица измерения ингредиента',
-        max_length=200)
+        max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value)
 
     class Meta:
         ordering = ['name']
@@ -26,7 +33,7 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     name = models.CharField(
         'Имя',
-        max_length=60,
+        max_length=Limits.MAX_LENGTH_TAG.value,
         unique=True)
     color = models.CharField(
         'Цветовой HEX-код',
@@ -34,14 +41,14 @@ class Tag(models.Model):
         unique=True,
         validators=[
             RegexValidator(
-                regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+                regex='^#([A-Fa-f0-9]{3,6})$',
                 message='Введенное значение не является цветом в формате HEX!'
             )
         ]
     )
     slug = models.SlugField(
         'Ссылка',
-        max_length=100,
+        max_length=Limits.MAX_LENGTH_SLUG.value,
         unique=True)
 
     class Meta:
@@ -61,7 +68,7 @@ class Recipe(models.Model):
         verbose_name='Автор')
     name = models.CharField(
         'Название рецепта',
-        max_length=255)
+        max_length=Limits.MAX_LENGTH_RECIPE.value)
     image = models.ImageField(
         'Изображение рецепта',
         upload_to='static/recipe/',
@@ -71,12 +78,6 @@ class Recipe(models.Model):
         'Описание рецепта')
     cooking_time = models.IntegerField(
         'Время приготовления рецепта')
-    ingredients = models.ManyToManyField(
-        Ingredient,
-        through='RecipeIngredient',
-        verbose_name='Ингридиенты',
-        related_name='recipes',
-    )
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Тэги',
@@ -102,11 +103,11 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe')
+        related_name='recipe_ingredients')
     ingredient = models.ForeignKey(
-        'Ingredient',
+        Ingredient,
         on_delete=models.CASCADE,
-        related_name='recipe')
+        related_name='recipe_ingredients')
     amount = models.PositiveSmallIntegerField(
         default=1,
         validators=(
@@ -146,14 +147,19 @@ class Subscribe(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'],
-                name='unique_subscription')]
+                name='unique_subscription'),
+            models.CheckConstraint(
+                check=~Q(user=F('author')),
+                name='user_cannot_subscribe_to_self'
+            )
+        ]
 
     def __str__(self):
         return f'Пользователь {self.user} -> автор {self.author}'
 
 
 class FavoriteRecipe(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         null=True,
@@ -181,7 +187,7 @@ class ShoppingCart(models.Model):
         related_name='shopping_cart',
         null=True,
         verbose_name='Пользователь')
-    recipe = models.ManyToManyField(
+    recipe = models.ForeignKey(
         Recipe,
         related_name='shopping_cart',
         verbose_name='Покупка')

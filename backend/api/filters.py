@@ -4,7 +4,7 @@ from users.models import User
 from recipes.models import Ingredient, Recipe
 
 
-class IngredientFilter(filters.SearchFilter):
+class IngredientFilter(filters.FilterSet):
     name = filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:
