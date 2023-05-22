@@ -1,23 +1,31 @@
-from django.contrib.auth import get_user_model
-from django.db.models.aggregates import Count
-from django.db.models.expressions import Exists, OuterRef, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
+from django.contrib.auth import get_user_model
+from django.db.models.aggregates import Count
+from django.db.models.expressions import Exists, OuterRef, Value
+
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import (SAFE_METHODS, AllowAny,
+from rest_framework.permissions import (SAFE_METHODS,
+                                        AllowAny,
                                         IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import (FavoriteRecipe, Ingredient,
-                            Recipe, ShoppingCart, Tag)
+from recipes.models import (FavoriteRecipe,
+                            Ingredient,
+                            Recipe,
+                            ShoppingCart,
+                            Tag)
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAdminOrReadOnly
-from .serializers import (IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer, SubscribeRecipeSerializer,
-                          SubscribeSerializer, TagSerializer)
+from .serializers import (IngredientSerializer,
+                          RecipeReadSerializer,
+                          RecipeWriteSerializer,
+                          SubscribeRecipeSerializer,
+                          SubscribeSerializer,
+                          TagSerializer)
 from .utils import get_shopping_cart
 
 

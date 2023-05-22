@@ -10,10 +10,6 @@ User = get_user_model()
 
 
 class Ingredient(models.Model):
-    name_validator = RegexValidator(
-        r'^[a-zA-Z0-9\s]*$',
-        'Название ингредиента может содержать только буквы, цифры и пробелы.'
-    )
     name = models.CharField(
         'Название ингредиента',
         max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value)
@@ -76,7 +72,7 @@ class Recipe(models.Model):
         null=True)
     text = models.TextField(
         'Описание рецепта')
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления рецепта')
     tags = models.ManyToManyField(
         Tag,
@@ -103,11 +99,11 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_ingredients')
+        related_name='recipe')
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='recipe_ingredients')
+        related_name='ingredient')
     amount = models.PositiveSmallIntegerField(
         default=1,
         validators=(
@@ -163,12 +159,12 @@ class FavoriteRecipe(models.Model):
         User,
         on_delete=models.CASCADE,
         null=True,
-        related_name='favorite_recipe',
+        related_name='favorite',
         verbose_name='Пользователь')
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorite_recipe',
+        related_name='favorite',
         verbose_name='Избранный рецепт')
 
     class Meta:
@@ -184,12 +180,12 @@ class ShoppingCart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shopping_cart',
+        related_name='cart',
         null=True,
         verbose_name='Пользователь')
     recipe = models.ForeignKey(
         Recipe,
-        related_name='shopping_cart',
+        related_name='cart',
         verbose_name='Покупка')
 
     class Meta:
