@@ -22,3 +22,5 @@ class Limits(IntEnum):
     EXCEPTION_RU = '[^а-яёА-ЯЁ -]+'
     # Исключение для фамилии
     EXCEPTION_EN = '[^a-zA-Z -]+'
+    # Максимальная длинна HEX
+    MAX_LEN_HEX = 7

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from django.core import validators
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.db.models import F, Q
 
 from core.enums import Limits
@@ -12,7 +13,14 @@ User = get_user_model()
 class Ingredient(models.Model):
     name = models.CharField(
         'Название ингредиента',
-        max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value)
+        max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value,
+        validators=[
+            RegexValidator(
+                regex='!@$%^&',
+                message='Введите название без спец символов.'
+            )
+        ]
+    )
     measurement_unit = models.CharField(
         'Единица измерения ингредиента',
         max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value)
@@ -30,10 +38,17 @@ class Tag(models.Model):
     name = models.CharField(
         'Имя',
         max_length=Limits.MAX_LENGTH_TAG.value,
-        unique=True)
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex='!@$%^&',
+                message='Введите название без спец символов.'
+            )
+        ]
+    )
     color = models.CharField(
         'Цветовой HEX-код',
-        max_length=7,
+        max_length=Limits.MAX_LEN_HEX.value,
         unique=True,
         validators=[
             RegexValidator(
@@ -72,8 +87,6 @@ class Recipe(models.Model):
         null=True)
     text = models.TextField(
         'Описание рецепта')
-    cooking_time = models.PositiveSmallIntegerField(
-        'Время приготовления рецепта')
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Тэги',
@@ -99,11 +112,15 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe')
+        related_name='ingredients',
+        verbose_name=_('Recipe')
+    )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='ingredient')
+        related_name='+',
+        verbose_name=_('Ingredient'),
+    )
     amount = models.PositiveSmallIntegerField(
         default=1,
         validators=(
@@ -164,8 +181,9 @@ class FavoriteRecipe(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorite',
-        verbose_name='Избранный рецепт')
+        related_name='+',
+        verbose_name=_('Recipe')
+    )
 
     class Meta:
         verbose_name = 'Избранный рецепт'
@@ -185,8 +203,9 @@ class ShoppingCart(models.Model):
         verbose_name='Пользователь')
     recipe = models.ForeignKey(
         Recipe,
-        related_name='cart',
-        verbose_name='Покупка')
+        related_name='+',
+        verbose_name=_('Recipe')
+    )
 
     class Meta:
         verbose_name = 'Покупка'

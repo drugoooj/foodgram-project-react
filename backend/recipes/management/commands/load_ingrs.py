@@ -17,7 +17,7 @@ class Command(BaseCommand):
                 reader = csv.DictReader(file, delimiter=",")
                 for row in reader:
                     name, measurement_unit = row.values()
-                    Ingredient.objects.create(
+                    Ingredient.objects.bulk_create(
                         name=name,
                         measurement_unit=measurement_unit
                     )
