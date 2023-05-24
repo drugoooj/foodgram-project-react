@@ -16,7 +16,7 @@ class Ingredient(models.Model):
         max_length=Limits.MAX_LEN_RECIPES_CHARFIELD.value,
         validators=[
             RegexValidator(
-                regex='!@$%^&',
+                regex=r'[^!@$%^&]+',
                 message='Введите название без спец символов.'
             )
         ]
@@ -41,7 +41,7 @@ class Tag(models.Model):
         unique=True,
         validators=[
             RegexValidator(
-                regex='!@$%^&',
+                regex=r'[^!@$%^&]+',
                 message='Введите название без спец символов.'
             )
         ]
