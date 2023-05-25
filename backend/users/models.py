@@ -1,8 +1,8 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 
 from core.enums import Limits
-from core.validators import OneOfTwoValidator
 
 
 class User(AbstractUser):
@@ -13,19 +13,19 @@ class User(AbstractUser):
     first_name = models.CharField(
         verbose_name='Имя',
         max_length=Limits.MAX_LEN_NAME.value,
-        validators=(OneOfTwoValidator(
-            first_regex=Limits.EXCEPTION_RU.value,
-            second_regex=Limits.EXCEPTION_EN.value,
-            field='Имя'),
+        validators=(RegexValidator(
+            regex=r'[^!@$%^&]+',
+            message='Введите имя без специальных символов.',
+            code='invalid_first_name'),
         ),
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
         max_length=Limits.MAX_LAST_NAME.value,
-        validators=(OneOfTwoValidator(
-            first_regex=Limits.EXCEPTION_RU.value,
-            second_regex=Limits.EXCEPTION_EN.value,
-            field='Фамилия'),
+        validators=(RegexValidator(
+            regex=r'[^!@$%^&]+',
+            message='Введите фамилию без специальных символов.',
+            code='invalid_last_name'),
         ),
     )
     USERNAME_FIELD = 'email'

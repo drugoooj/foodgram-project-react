@@ -2,10 +2,15 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from djoser.views import UserViewSet
 from django.db.models.aggregates import Count
 from django.db.models.expressions import Exists, OuterRef, Value
 
 from rest_framework import generics, status, viewsets
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action, api_view
 from rest_framework.decorators import action
 from rest_framework.permissions import (SAFE_METHODS,
                                         AllowAny,
@@ -13,20 +18,17 @@ from rest_framework.permissions import (SAFE_METHODS,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import (FavoriteRecipe,
-                            Ingredient,
-                            Recipe,
-                            ShoppingCart,
-                            Tag)
+from recipes.models import (FavoriteRecipe, Ingredient,
+                            Recipe, ShoppingCart,
+                            Subscribe, Tag)
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAdminOrReadOnly
-from .serializers import (IngredientSerializer,
-                          RecipeReadSerializer,
-                          RecipeWriteSerializer,
-                          SubscribeRecipeSerializer,
-                          SubscribeSerializer,
-                          TagSerializer)
-from .utils import get_shopping_cart
+from .serializers import (IngredientSerializer, RecipeReadSerializer,
+                          RecipeWriteSerializer, SubscribeRecipeSerializer,
+                          SubscribeSerializer, TagSerializer,
+                          TokenSerializer, UserCreateSerializer,
+                          UserListSerializer, UserPasswordSerializer)
+# from .utils import get_shopping_cart
 
 
 User = get_user_model()
@@ -124,6 +126,62 @@ class AddDeleteShoppingCart(
         self.request.user.shopping_cart.recipe.remove(instance)
 
 
+class AuthToken(ObtainAuthToken):
+    """Авторизация пользователя."""
+
+    serializer_class = TokenSerializer
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response(
+            {'auth_token': token.key},
+            status=status.HTTP_201_CREATED)
+
+
+class UsersViewSet(UserViewSet):
+    """Пользователи."""
+
+    serializer_class = UserListSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return User.objects.annotate(
+            is_subscribed=Exists(
+                self.request.user.follower.filter(
+                    author=OuterRef('id'))
+            )).prefetch_related(
+                'follower', 'following'
+        ) if self.request.user.is_authenticated else User.objects.annotate(
+            is_subscribed=Value(False))
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'post':
+            return UserCreateSerializer
+        return UserListSerializer
+
+    def perform_create(self, serializer):
+        password = make_password(self.request.data['password'])
+        serializer.save(password=password)
+
+    @action(
+        detail=False,
+        permission_classes=(IsAuthenticated,))
+    def subscriptions(self, request):
+        """Получить на кого пользователь подписан."""
+
+        user = request.user
+        queryset = Subscribe.objects.filter(user=user)
+        pages = self.paginate_queryset(queryset)
+        serializer = SubscribeSerializer(
+            pages, many=True,
+            context={'request': request})
+        return self.get_paginated_response(serializer.data)
+
+
 class RecipesViewSet(viewsets.ModelViewSet):
     """Рецепты."""
 
@@ -165,9 +223,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, user):
         """Качаем список с ингредиентами."""
 
-        shopping_cart = get_shopping_cart(user)
+        # shopping_cart = get_shopping_cart(user)
         filename = 'shoppingcart.pdf'
-        response = HttpResponse(shopping_cart, content_type='text/plain')
+        response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
 
@@ -189,3 +247,20 @@ class IngredientsViewSet(
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filterset_class = IngredientFilter
+
+
+@api_view(['post'])
+def set_password(request):
+    """Изменить пароль."""
+
+    serializer = UserPasswordSerializer(
+        data=request.data,
+        context={'request': request})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {'message': 'Пароль изменен!'},
+            status=status.HTTP_201_CREATED)
+    return Response(
+        {'error': 'Введите верные данные!'},
+        status=status.HTTP_400_BAD_REQUEST)

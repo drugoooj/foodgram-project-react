@@ -19,8 +19,8 @@ class Limits(IntEnum):
     # Максимальная длинна названия рецепта
     MAX_LENGTH_RECIPE = 255
     # Исключение для имени
-    EXCEPTION_RU = '[^а-яёА-ЯЁ -]+'
+    # EXCEPTION_RU = '[^а-яёА-ЯЁ -]+'
     # Исключение для фамилии
-    EXCEPTION_EN = '[^a-zA-Z -]+'
+    # EXCEPTION_EN = '[^a-zA-Z -]+'
     # Максимальная длинна HEX
     MAX_LEN_HEX = 7
