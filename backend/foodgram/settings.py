@@ -118,4 +118,3 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.LimitPageNumberPagination',
     'PAGE_SIZE': 6,
 }
-# --
