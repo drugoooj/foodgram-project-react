@@ -7,7 +7,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      ../infra/.env
+      - ./.env
 
   backend:
     image: equilibrist/foodgram_backend:latest
@@ -22,7 +22,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ../infra/.env
+      - ./.env
 
   frontend:
     image: equilibrist/foodgram_frontend:latest
