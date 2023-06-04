@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.2'
 services:
 
   db:
@@ -13,8 +13,8 @@ services:
     image: equilibrist/foodgram_backend:latest
     restart: always
     volumes:
-      - static_value:/app/static/
-      - media_value:/app/media/
+      - static_value:/code/static/
+      - media_value:/code/media/
     depends_on:
       - db
     env_file:
